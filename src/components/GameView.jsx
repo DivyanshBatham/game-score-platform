@@ -13,6 +13,7 @@ export function GameView({ onBackToLobby, onGameOver }) {
   const [scoringPlayerId, setScoringPlayerId] = useState(null);
   const [editingPlayerId, setEditingPlayerId] = useState(null);
   const [showResults, setShowResults] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(true);
 
   if (!currentGame) {
     return (
@@ -64,6 +65,7 @@ export function GameView({ onBackToLobby, onGameOver }) {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Sidebar leaderboard */}
+      {showLeaderboard && (
       <aside className="lg:w-64 shrink-0 bg-flip-blue-dark border-b lg:border-b-0 lg:border-r border-flip-yellow/30 p-4">
         <h2 className="text-flip-yellow font-bold text-lg mb-3">Leaderboard</h2>
         <ol className="space-y-2">
@@ -90,20 +92,33 @@ export function GameView({ onBackToLobby, onGameOver }) {
         </ol>
         <p className="text-flip-cream/70 text-sm mt-4">Round {currentRound}</p>
       </aside>
+      )}
 
       {/* Main area */}
       <main className="flex-1 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <button
-            type="button"
-            onClick={onBackToLobby}
-            className="text-flip-yellow hover:underline text-sm"
-          >
-            ← Exit game
-          </button>
-          <h2 className="text-xl font-semibold text-flip-cream">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mb-6">
+          <div className="justify-self-start min-w-0">
+            <button
+              type="button"
+              onClick={onBackToLobby}
+              className="text-flip-yellow hover:underline text-sm"
+            >
+              ← Exit game
+            </button>
+          </div>
+          <h2 className="text-xl font-semibold text-flip-cream text-center px-1">
             {shouldShowResults ? 'Results' : `Round ${currentRound}`}
           </h2>
+          <div className="justify-self-end text-right min-w-0">
+            <button
+              type="button"
+              onClick={() => setShowLeaderboard((v) => !v)}
+              aria-pressed={showLeaderboard}
+              className="text-flip-yellow hover:underline text-sm"
+            >
+              {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
+            </button>
+          </div>
         </div>
 
         {shouldShowResults ? (
