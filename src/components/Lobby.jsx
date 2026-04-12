@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../context/GameContext';
 
 export function Lobby({ onStartGame, onViewPastGames }) {
@@ -9,8 +9,11 @@ export function Lobby({ onStartGame, onViewPastGames }) {
     addPlayer,
     updatePlayerName,
     removePlayer,
+    pastGames,
   } = useGame();
   const [newPlayerName, setNewPlayerName] = useState('');
+  const [pendingFocusPlayerId, setPendingFocusPlayerId] = useState(null);
+  const playerInputRefs = useRef(new Map());
 
   const hasGame = currentGameId && currentGame && currentGame.status === 'active';
   const players = currentGame?.players ?? [];
@@ -26,12 +29,46 @@ export function Lobby({ onStartGame, onViewPastGames }) {
     createNewGame([]);
   };
 
+  const lastFinishedGame = pastGames[0] ?? null;
+  const handleSamePlayersAsLastMatch = () => {
+    if (!lastFinishedGame?.players?.length) return;
+    createNewGame(lastFinishedGame.players.map((p) => p.name));
+  };
+
   const handleAddPlayer = (e) => {
     e?.preventDefault();
     if (!currentGameId) return;
-    addPlayer(currentGameId, newPlayerName);
+    const newId = addPlayer(currentGameId, newPlayerName);
+    setPendingFocusPlayerId(newId);
     setNewPlayerName('');
   };
+
+  const focusPlayerInput = (playerId) => {
+    const el = playerInputRefs.current.get(playerId);
+    if (!el) return;
+    el.focus();
+    // Helpful when the default name is "Player N"
+    el.select?.();
+  };
+
+  useEffect(() => {
+    if (!pendingFocusPlayerId) return;
+    // Wait until the new input is mounted.
+    requestAnimationFrame(() => {
+      focusPlayerInput(pendingFocusPlayerId);
+      setPendingFocusPlayerId(null);
+    });
+  }, [pendingFocusPlayerId, players.length]);
+
+  const setPlayerInputRef = useMemo(() => {
+    return (playerId) => (el) => {
+      if (!el) {
+        playerInputRefs.current.delete(playerId);
+        return;
+      }
+      playerInputRefs.current.set(playerId, el);
+    };
+  }, []);
 
   const handleStart = () => {
     if (canStart) onStartGame?.();
@@ -53,6 +90,15 @@ export function Lobby({ onStartGame, onViewPastGames }) {
           >
             New Game
           </button>
+          {lastFinishedGame && (
+            <button
+              type="button"
+              onClick={handleSamePlayersAsLastMatch}
+              className="w-full py-3 px-6 rounded-xl border-2 border-flip-yellow text-flip-yellow font-medium hover:bg-flip-yellow/10 transition"
+            >
+              Same players as last match
+            </button>
+          )}
           <button
             type="button"
             onClick={onViewPastGames}
@@ -78,8 +124,16 @@ export function Lobby({ onStartGame, onViewPastGames }) {
               >
                 <input
                   type="text"
+                  ref={setPlayerInputRef(p.id)}
                   value={p.name}
                   onChange={(e) => updatePlayerName(currentGameId, p.id, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    if (!currentGameId) return;
+                    const newId = addPlayer(currentGameId, '');
+                    setPendingFocusPlayerId(newId);
+                  }}
                   className="flex-1 bg-transparent text-flip-cream font-medium placeholder-flip-cream/50 focus:outline-none focus:ring-1 ring-flip-yellow rounded px-1"
                   placeholder="Player name"
                 />

@@ -68,6 +68,7 @@ export function GameProvider({ children }) {
         },
       };
     });
+    return id;
   }, []);
 
   const updatePlayerName = useCallback((gameId, playerId, name) => {

@@ -8,8 +8,15 @@ function formatDate(ts) {
   });
 }
 
-export function PastGames({ onBack }) {
-  const { pastGames, setCurrentGameId } = useGame();
+export function PastGames({ onBack, onAfterRematch, onViewFinishedGame }) {
+  const { pastGames, setCurrentGameId, createNewGame } = useGame();
+
+  const playerNamesFromGame = (game) => game.players.map((p) => p.name);
+
+  const handleSamePlayersLobby = (game) => {
+    createNewGame(playerNamesFromGame(game));
+    onAfterRematch?.();
+  };
 
   if (pastGames.length === 0) {
     return (
@@ -56,14 +63,21 @@ export function PastGames({ onBack }) {
                     </li>
                   ))}
               </ul>
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => handleSamePlayersLobby(game)}
+                  className="rounded-lg border border-flip-yellow/60 px-3 py-1.5 text-sm text-flip-yellow hover:bg-flip-yellow/10"
+                >
+                  Same players — lobby
+                </button>
                 <button
                   type="button"
                   onClick={() => {
                     setCurrentGameId(game.id);
-                    onBack?.();
+                    onViewFinishedGame?.();
                   }}
-                  className="text-flip-yellow/90 text-sm hover:underline"
+                  className="text-flip-yellow/90 text-sm hover:underline sm:text-right"
                 >
                   View rounds & results →
                 </button>

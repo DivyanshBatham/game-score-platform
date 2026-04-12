@@ -15,7 +15,11 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-flip-blue text-flip-cream">
       {showPast ? (
-        <PastGames onBack={() => setView('game')} />
+        <PastGames
+          onBack={() => setView('lobby')}
+          onAfterRematch={() => setView('lobby')}
+          onViewFinishedGame={() => setView('game')}
+        />
       ) : showGame ? (
         <GameView
           onBackToLobby={() => setView('lobby')}
